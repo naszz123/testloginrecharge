@@ -1,37 +1,50 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Login</title>
-    <style>
-        body {
-            font-family: Arial;
-            display: flex;
-            height: 100vh;
-            align-items: center;
-            justify-content: center;
-        }
-        .box {
-            padding: 20px;
-            border-radius: 12px;
-            border: 1px solid #ccc;
-            text-align: center;
-        }
-        a {
-            padding: 12px 20px;
-            background: #24292e;
-            color: white;
-            text-decoration: none;
-            border-radius: 8px;
-            display: inline-block;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <title>Login Page</title>
+  <style>
+    body { font-family: Arial; background:#eef; display:flex; justify-content:center; align-items:center; height:100vh; }
+    .box { background:white; padding:25px; width:300px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
+    input { width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #aaa; }
+    button { width:100%; padding:10px; border:none; border-radius:8px; cursor:pointer; font-size:16px; }
+    .login-btn { background:#4CAF50; color:white; }
+    .buy-btn { background:#0a84ff; color:white; margin-top:10px; }
+  </style>
 </head>
 <body>
+  <div class="box">
+    <h2 style="text-align:center;">Login</h2>
 
-<div class="box">
-    <h2>Login Required</h2>
-    <a href="/auth/github">Login with GitHub</a>
-</div>
+    <input id="username" type="text" placeholder="Nama">
+    <input id="password" type="password" placeholder="Password">
 
+    <button class="login-btn" onclick="login()">Login</button>
+    <button class="buy-btn" onclick="buyAccess()">Buy Access</button>
+  </div>
+
+  <script>
+    async function login() {
+      const user = document.getElementById('username').value.trim();
+      const pass = document.getElementById('password').value.trim();
+
+      const res = await fetch('https://raw.githubusercontent.com/USERNAME/REPO/main/user.js');
+      const data = await res.json();
+
+      const found = data.users.find(u => u.username === user && u.password === pass);
+
+      if(found) {
+        alert('Login berhasil!');
+        window.location.href = 'index.html';
+      } else {
+        alert('Nama atau Password salah');
+      }
+    }
+
+    function buyAccess() {
+      window.location.href = "https://wa.me/6285797237843?text=Saya%20ingin%20membeli%akses";
+    }
+  </script>
 </body>
 </html>
+
