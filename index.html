@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>TikTok Coins Recharge</title>
+<style>
+  :root{
+    --accent:#ff2a5f;
+    --sky:#87CEEB;
+    --card:#ffffff;
+    --muted:#666;
+  }
+  body{
+    margin:0; padding:20px; min-height:100vh; font-family: Arial, Helvetica, sans-serif;
+    background: linear-gradient(to bottom right, var(--sky), #ffffff); box-sizing: border-box;
+  }
+  .header{ display:flex; align-items:center; padding-bottom:15px; border-bottom:1px solid rgba(0,0,0,0.08); }
+  .logo{ font-weight:700; font-size:20px; display:flex; align-items:center; gap:10px; }
+  .logo img{ height:30px; display:block; }
+  .search-container{ margin-left:auto; }
+  .search-container input{ padding:6px 10px; border-radius:18px; border:1px solid #ccc; width:180px; }
+  .content{ max-width:480px; margin:30px auto; }
+  h2{ font-weight:700; margin:0 0 10px 0; }
+  .username-input input{ width:100%; padding:10px 14px; font-size:15px; border-radius:20px; border:1px solid #ccc; box-sizing:border-box; }
+  .notice{ color:#e53935; font-weight:600; margin:12px 0 18px 0; }
+  .packages{ display:grid; grid-template-columns:repeat(2,1fr); gap:12px; margin-bottom:16px; }
+  .package{ background:var(--card); border:1px solid #ddd; border-radius:12px; padding:12px; text-align:center; cursor:pointer;
+    transition: transform .12s ease, box-shadow .12s ease, border-color .12s ease; display:flex; flex-direction:column; align-items:center; gap:8px; }
+  .package:hover{ transform:translateY(-4px); box-shadow:0 6px 18px rgba(0,0,0,0.06); }
+  .package.active{ border-color: var(--accent); box-shadow: 0 8px 22px rgba(255,42,95,0.12); }
+  .coin-icon{ height:36px; width:36px; object-fit:cover; border-radius:6px; }
+  .package-amount{ font-weight:800; font-size:18px; }
+  .package-price{ color:var(--muted); font-size:14px; }
+  .payment{ display:flex; align-items:center; gap:8px; margin-bottom:18px; color:var(--muted); }
+  .payment img{ height:22px; }
+  .recharge-btn{ background:var(--accent); color:white; border:none; padding:14px; width:100%; border-radius:28px; font-size:18px; font-weight:700; cursor:pointer; }
+  .recharge-btn[disabled]{ opacity:.6; cursor:not-allowed; }
+
+  /* Popups */
+  .popup{ position:fixed; inset:0; display:none; background:rgba(0,0,0,0.55); backdrop-filter: blur(3px); align-items:center; justify-content:center; z-index:9999; }
+  .card{ background:var(--card); width:90%; max-width:420px; padding:22px; border-radius:14px; text-align:center; box-shadow:0 12px 30px rgba(0,0,0,0.12); transform-origin:center; animation:pop .28s ease; }
+  @keyframes pop{ from{ transform:scale(.96); opacity:0 } to{ transform:scale(1); opacity:1 } }
+  .green-circle{ width:72px; height:72px; border-radius:50%; background:#4CAF50; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; }
+  .paypal-logo{ width:100px; margin:6px auto 10px; display:block; }
+  .ok-btn{ background:var(--accent); color:#fff; border:none; padding:10px 20px; border-radius:10px; cursor:pointer; font-weight:700; margin-top:12px; }
+
+  .loader{ width:56px; height:56px; border-radius:50%; border:6px solid rgba(0,0,0,0.08); border-top:6px solid var(--accent); margin:6px auto 10px; animation:spin 1s linear infinite; }
+  @keyframes spin{ to{ transform:rotate(360deg) } }
+  .progress-wrap{ width:100%; background:#eee; height:10px; border-radius:10px; overflow:hidden; margin-top:12px; }
+  .progress{ width:0%; height:100%; background:var(--accent); transition:width .2s linear; }
+
+  /* user popup checkmark */
+  .checkmark{ width:72px; height:72px; border-radius:50%; background:#fff; margin:0 auto 12px; display:flex; align-items:center; justify-content:center; box-shadow:0 6px 18px rgba(0,0,0,0.08); }
+  .checkmark .circle{ width:58px; height:58px; border-radius:50%; background:linear-gradient(135deg,#e6fff3,#d5ffea); display:flex;align-items:center;justify-content:center; }
+  .check-svg{ width:34px; height:34px; stroke:#1aa34a; stroke-width:4; fill:none; stroke-linecap:round; stroke-linejoin:round; }
+  .check-svg path{ stroke-dasharray: 50; stroke-dashoffset: 50; animation: draw 0.45s ease forwards 0.08s; }
+  @keyframes draw{ to{ stroke-dashoffset:0 } }
+  .user-title{ font-size:18px; font-weight:800; margin:6px 0; }
+  .user-sub{ color:var(--muted); margin:0; }
+
+  /* music button + popup */
+  .music-btn{ position:fixed; bottom:20px; left:20px; background:#00c3ff; color:white; padding:12px 15px; border-radius:50%; font-size:22px; cursor:pointer; box-shadow:0 6px 18px rgba(0,195,255,0.18); z-index:10001; border:none; }
+  .music-popup{ position:fixed; bottom:80px; left:20px; width:220px; background:#111; color:#fff; padding:12px; border-radius:12px; display:none; box-shadow:0 12px 30px rgba(0,0,0,0.25); z-index:10001; }
+  .music-popup h3{ margin:6px 0 8px 0; font-size:16px; color:#fff; }
+  .music-popup .close-btn{ position:absolute; right:8px; top:6px; color:#ff6666; cursor:pointer; font-size:18px; background:none; border:none; }
+  .music-popup button.song-btn{ width:100%; margin:6px 0; padding:8px; border-radius:8px; background:#141414; color:#00e5ff; border:1px solid rgba(0,229,255,0.12); cursor:pointer; text-align:left; }
+  .music-controls{ display:flex; gap:8px; align-items:center; margin-bottom:8px; }
+  .music-controls button{ padding:8px 10px; border-radius:8px; background:#0b0b0b; color:#fff; border:1px solid rgba(255,255,255,0.05); cursor:pointer; }
+
+  @media (max-width:420px){ .content{ margin:18px auto; padding:0 6px; } .logo img{ height:26px; } .music-popup{ left:10px; width:200px; } }
+</style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">
+      <img src="https://files.catbox.moe/0tudk3.png" alt="TikTok Logo" />
+      TikTok
+    </div>
+    <div class="search-container"><input type="search" placeholder="Search" /></div>
+  </div>
+
+  <main class="content" role="main">
+    <h2>Get Coins</h2>
+    <div class="username-input" style="margin-bottom:10px;">
+      <input id="username" type="text" placeholder="Enter Username. Example @Username" />
+    </div>
+    <div class="notice">Recharge: <span>Save upto 35% compared to in-app purchase</span></div>
+
+    <div class="packages" id="packages">
+      <div class="package" data-coins="70" data-price="0.60">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">70</div>
+        <div class="package-price">$ 0.60</div>
+      </div>
+      <div class="package" data-coins="350" data-price="3.5">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">350</div>
+        <div class="package-price">$ 3.5</div>
+      </div>
+      <div class="package" data-coins="700" data-price="7.4">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">700</div>
+        <div class="package-price">$ 7.4</div>
+      </div>
+      <div class="package" data-coins="1400" data-price="16.30">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">1,400</div>
+        <div class="package-price">$ 16.30</div>
+      </div>
+      <div class="package" data-coins="3500" data-price="37">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">3,500</div>
+        <div class="package-price">$ 37</div>
+      </div>
+      <div class="package" data-coins="7000" data-price="72.00">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">7,000</div>
+        <div class="package-price">$ 72.00</div>
+      </div>
+      <div class="package" data-coins="17500" data-price="185.5">
+        <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+        <div class="package-amount">17,500</div>
+        <div class="package-price">$ 185.5</div>
+      </div>
+      <div class="package" data-coins="custom" data-price="custom">
+  <img class="coin-icon" src="https://files.catbox.moe/nlykhs.jpeg" alt="coin">
+  <div class="package-amount">Custom</div>
+  <div class="package-price">Large amount supported</div>
+
+  <!-- INPUT CUSTOM (hidden default) -->
+  <input 
+    id="customInput" 
+    type="number" 
+    inputmode="numeric"
+    placeholder="Masukkan jumlah"
+    style="margin-top:8px; padding:8px; border-radius:10px; width:90%; display:none;"
+  >
+</div>
+
+      </div>
+    </div>
+
+    <div class="payment">
+      <div class="payment-label">Payment method</div>
+      <img src="https://img.icons8.com/color/48/000000/visa.png" alt="visa">
+      <img src="https://img.icons8.com/color/48/000000/mastercard.png" alt="mc">
+      <img src="https://img.icons8.com/color/48/000000/amex.png" alt="amex">
+      <img src="https://img.icons8.com/color/48/000000/paypal.png" alt="paypal">
+    </div>
+
+    <button id="rechargeBtn" class="recharge-btn">Recharge</button>
+  </main>
+
+  <!-- Loading popup -->
+  <div id="loadingPopup" class="popup" aria-hidden="true">
+    <div class="card">
+      <div class="loader" role="img" aria-label="loading"></div>
+      <div style="font-weight:700; margin-top:6px;">Processing payment...</div>
+      <div class="progress-wrap"><div id="progress" class="progress"></div></div>
+    </div>
+  </div>
+
+  <!-- Payment completed popup -->
+  <div id="paymentPopup" class="popup" aria-hidden="true">
+    <div class="card">
+      <div class="green-circle"></div>
+      <h2 style="margin:6px 0 2px 0;">Payment Completed</h2>
+      <img class="paypal-logo" src="https://upload.wikimedia.org/wikipedia/commons/b/b5/PayPal.svg" alt="paypal">
+      <h3 style="margin:8px 0 4px 0;">Payment method</h3>
+      <p id="popupText" style="color:var(--muted); margin:6px 0 8px 0;"></p>
+      <p style="margin:0 0 10px 0; color:var(--muted);">Coins will be added shortly.</p>
+      <button class="ok-btn" id="paymentOk">OK</button>
+    </div>
+  </div>
+
+  <!-- User info (mewah) popup with animated checkmark -->
+  <div id="userInfoPopup" class="popup" aria-hidden="true">
+    <div class="card">
+      <div class="checkmark">
+        <div class="circle">
+          <svg class="check-svg" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <path d="M20 6L9 17l-5-5" />
+          </svg>
+        </div>
+      </div>
+      <div class="user-title">Recharge Successful</div>
+      <p class="user-sub" id="userInfoText">Username: <strong id="resultUsername"></strong></p>
+      <p class="user-sub" id="userCoinsText">Coins added: <strong id="resultCoins"></strong></p>
+      <button class="ok-btn" id="finalOk">OK</button>
+    </div>
+  </div>
+
+  <!-- MUSIC: button, popup, players -->
+  <button id="musicBtn" class="music-btn" aria-label="Music">🎵</button>
+
+  <div id="musicPopup" class="music-popup" aria-hidden="true">
+    <button class="close-btn" onclick="toggleMusicPopup()" aria-label="close">×</button>
+    <h3>Musik</h3>
+
+    <div class="music-controls">
+      <button id="bgPlayBtn"></button>
+      <button id="bgPauseBtn" style="display:none"></button>
+    </div>
+
+    <div class="music-list">
+      <button class="song-btn" onclick="playSong('https://files.catbox.moe/61ybj2.m4a')">🎵 Habibi Come To Dubai</button>
+    </div>
+  </div>
+<audio id="bgAudio" loop></audio>
+<audio id="audioPlayer"></audio>
+<input id="customMusicURL" type="password" style="display:none;">
+<div id="customPopup" class="popup" aria-hidden="true">
+  <div class="card">
+    <h3>Custom Coins</h3>
+    <p>Masukkan jumlah coins:</p>
+
+    <input id="customInput" type="number"
+      style="width:90%; padding:10px; margin-top:10px; border-radius:10px; border:1px solid #ccc;">
+
+    <button class="ok-btn" style="margin-top:12px;" onclick="submitCustom()">OK</button>
+  </div>
+</div>
+<input id="customInput" type="number" inputmode="numeric" style="opacity:0; position:absolute; left:-9999px;">
+
+<script>
+/* ====== Music popup & player (clean unified) ====== */
+const musicBtn = document.getElementById('musicBtn');
+const musicPopup = document.getElementById('musicPopup');
+const bgAudio = document.getElementById('bgAudio');
+const audioPlayer = document.getElementById('audioPlayer');
+const bgPlayBtn = document.getElementById('bgPlayBtn');
+const bgPauseBtn = document.getElementById('bgPauseBtn');
+
+function toggleMusicPopup(){
+  if(musicPopup.style.display === 'block'){
+    musicPopup.style.display = 'none';
+  } else {
+    musicPopup.style.display = 'block';
+  }
+}
+musicBtn.addEventListener('click', toggleMusicPopup);
+
+function playSong(url){
+  // stop bg music if playing, optional:
+  if(!bgAudio.paused){
+    bgAudio.pause();
+    bgPlayBtn.style.display = '';
+    bgPauseBtn.style.display = 'none';
+  }
+  audioPlayer.src = url;
+  audioPlayer.play().catch(()=>{/* ignore autoplay block errors */});
+  // bring the popup into view
+  musicPopup.style.display = 'block';
+}
+
+/* background music controls */
+bgPlayBtn.addEventListener('click', ()=>{
+  bgAudio.play().catch(()=>{/* ignore autoplay block errors */});
+  bgPlayBtn.style.display = 'none';
+  bgPauseBtn.style.display = '';
+});
+bgPauseBtn.addEventListener('click', ()=>{
+  bgAudio.pause();
+  bgPauseBtn.style.display = 'none';
+  bgPlayBtn.style.display = '';
+});
+
+let customTarget = null;
+
+function submitCustom(){
+  const val = document.getElementById("customInput").value.trim();
+
+  if (!val || isNaN(val) || Number(val) <= 0) {
+    alert("Masukkan angka valid!");
+    return;
+  }
+
+  customTarget.querySelector(".package-amount").innerText = val;
+  customTarget.querySelector(".package-price").innerText = "$ -";
+
+  selectedPackage = {
+    coins: val,
+    price: "Custom"
+  };
+
+  hide(document.getElementById('customPopup'));
+}
+const pkgEls = document.querySelectorAll('.package');
+let selectedPackage = null;
+
+pkgEls.forEach(p => {
+  p.addEventListener('click', () => {
+    pkgEls.forEach(x => x.classList.remove('active'));
+
+    p.classList.add('active');
+
+    // CUSTOM MODE
+    if (p.dataset.coins === "custom") {
+      const customInput = document.getElementById('customInput');
+      customInput.style.display = "block";   // tampilkan input angka
+      customInput.focus();
+
+      customInput.addEventListener("input", () => {
+        if (customInput.value <= 0) return;
+
+        // update tampilan
+        p.querySelector(".package-amount").innerText = customInput.value;
+
+        selectedPackage = {
+          coins: customInput.value,
+          price: "Custom"
+        };
+      });
+
+      return;
+    }
+
+    // NORMAL PACKAGE
+    document.getElementById('customInput').style.display = "none";
+
+    selectedPackage = {
+      coins: p.dataset.coins,
+      price: p.dataset.price
+    };
+  });
+});
+
+const rechargeBtn = document.getElementById('rechargeBtn');
+const loadingPopup = document.getElementById('loadingPopup');
+const paymentPopup = document.getElementById('paymentPopup');
+const userInfoPopup = document.getElementById('userInfoPopup');
+const popupText = document.getElementById('popupText');
+const progressBar = document.getElementById('progress');
+
+function show(el){ el.style.display = 'flex'; el.setAttribute('aria-hidden','false'); }
+function hide(el){ el.style.display = 'none'; el.setAttribute('aria-hidden','true'); }
+
+rechargeBtn.addEventListener('click', ()=>{
+  const username = document.getElementById('username').value.trim();
+  if(!username){ alert('Please enter your username.'); return; }
+  if(!selectedPackage){ alert('Please select a coin package.'); return; }
+
+  rechargeBtn.disabled = true;
+  rechargeBtn.innerText = 'Processing...';
+  progressBar.style.width = '0%';
+  show(loadingPopup);
+
+  let progress = 0;
+  const steps = 20;
+  const interval = 2000 / steps;
+  const inc = 100 / steps;
+  const t = setInterval(()=>{
+    progress += inc;
+    if(progress > 100) progress = 100;
+    progressBar.style.width = progress + '%';
+    if(progress >= 100){
+      clearInterval(t);
+      hide(loadingPopup);
+      rechargeBtn.disabled = false;
+      rechargeBtn.innerText = 'Recharge';
+      popupText.innerText = `The coin worth $${selectedPackage.price} has been charged.`;
+      show(paymentPopup);
+    }
+  }, interval);
+});
+
+document.getElementById('paymentOk').addEventListener('click', ()=>{
+  hide(paymentPopup);
+  const username = document.getElementById('username').value.trim();
+  document.getElementById('resultUsername').innerText = username;
+  document.getElementById('resultCoins').innerText = selectedPackage.coins;
+  setTimeout(()=> show(userInfoPopup), 120);
+});
+
+document.getElementById('finalOk').addEventListener('click', ()=>{
+  hide(userInfoPopup);
+  pkgEls.forEach(x=>x.classList.remove('active'));
+  selectedPackage = null;
+});
+
+document.addEventListener('keydown', (e)=>{
+  if(e.key === 'Escape'){ [loadingPopup,paymentPopup,userInfoPopup].forEach(hide); musicPopup.style.display='none'; }
+});
+</script>
+
+<footer style="text-align:center; margin:28px 0 8px 0; color:#888; font-size:13px;">© Powered By Tiktok Indonesia</footer>
+</body>
+</html>
