@@ -10,7 +10,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // PATH to your HTML file (change if needed)
-const HTML_PATH = process.env.HTML_PATH || '/mnt/data/final_tiktok_recharge.html';
+const HTML_PATH = process.env.HTML_PATH || '/storage/emulated/0/project_db_github_recharge_tiktok/index.html';
 
 // Basic session config (use secure settings in production)
 app.use(session({
