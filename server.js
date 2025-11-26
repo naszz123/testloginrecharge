@@ -1,16 +1,20 @@
 require("dotenv").config();
 const express = require("express");
+const path = require("path");
 const session = require("express-session");
 const passport = require("passport");
 const GitHubStrategy = require("passport-github2").Strategy;
-const path = require("path");
-const fs = require("fs");
 
 const app = express();
+const PORT = process.env.PORT || 3000;
 
-// ============================
-//   SESSION CONFIG
-// ============================
+// === Load Local Users ===
+const users = require("./users.js");
+
+// === EXPRESS CONFIG ===
+app.use(express.urlencoded({ extended: true }));
+app.use(express.json());
+
 app.use(
   session({
     secret: process.env.SESSION_SECRET,
@@ -21,10 +25,9 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
+app.use(express.static("public"));
 
-// ============================
-//   PASSPORT GITHUB STRATEGY
-// ============================
+// === GITHUB LOGIN STRATEGY (optional) ===
 passport.use(
   new GitHubStrategy(
     {
@@ -38,110 +41,65 @@ passport.use(
   )
 );
 
-passport.serializeUser((user, done) => {
-  done(null, user);
-});
-passport.deserializeUser((obj, done) => {
-  done(null, obj);
-});
+passport.serializeUser((user, done) => done(null, user));
+passport.deserializeUser((obj, done) => done(null, obj));
 
-// ============================
-//   STATIC FILE (PUBLIC)
-// ============================
-app.use(express.static("public"));
-app.use(express.urlencoded({ extended: true }));
+// === AUTH MIDDLEWARE ===
+function checkAuth(req, res, next) {
+  if (req.isAuthenticated() || req.session.loggedIn) return next();
+  res.redirect("/login");
+}
 
-// ============================
-//   ROUTE: LOGIN PAGE (FORM NAMA + PASSWORD)
-// ============================
+// === LOGIN PAGE ===
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public", "login.html"));
+  res.sendFile(path.join(__dirname, "public/login.html"));
 });
 
-// ============================
-//   LOGIN MANUAL (NAMA + PASSWORD)
-// ============================
-app.post("/login", (req, res) => {
-  const name = req.body.name;
-  const password = req.body.password;
+// === LOGIN MANUAL ===
+app.post("/manual-login", (req, res) => {
+  const { username, password } = req.body;
 
-  // file user disimpan di GitHub → local clone harus ada user.js
-  const usersFile = path.join(__dirname, "user.js");
-
-  if (!fs.existsSync(usersFile)) {
-    return res.send("File user.js tidak ditemukan di server.");
-  }
-
-  const users = require(usersFile);
-
-  const found = users.find(
-    (u) => u.name === name && u.password === password
+  const user = users.find(
+    (u) => u.username === username && u.password === password
   );
 
-  if (!found) {
-    return res.send("<h3>Akun salah / tidak terdaftar.</h3>");
+  if (!user) {
+    return res.send(`
+      <script>
+        alert("Username atau Password salah!");
+        window.location.href="/login";
+      </script>
+    `);
   }
 
-  // Simpan session login manual
-  req.session.user = { name };
+  req.session.loggedIn = true;
+  req.session.username = username;
 
-  return res.redirect("/");
+  res.redirect("/");
 });
 
-// ============================
-//   ROUTE: BUY ACCESS
-// ============================
-app.get("/buy", (req, res) => { 
-  res.redirect("https://wa.me/6285797237843?text=bang%20mo%20beli%20akun%20recharge%20nya"); 
-});
-
-// ============================
-//   GITHUB LOGIN ROUTES
-// ============================
-app.get(
-  "/auth/github",
-  passport.authenticate("github", { scope: ["user:email"] })
-);
+// === GITHUB ROUTES (hidden button) ===
+app.get("/auth/github", passport.authenticate("github", { scope: ["user:email"] }));
 
 app.get(
   "/auth/github/callback",
   passport.authenticate("github", { failureRedirect: "/login" }),
-  (req, res) => {
-    res.redirect("/");
-  }
+  (req, res) => res.redirect("/")
 );
 
-// ============================
-//   MIDDLEWARE CEK LOGIN
-// ============================
-function requireLogin(req, res, next) {
-  if (req.isAuthenticated() || req.session.user) {
-    return next();
-  }
-  return res.redirect("/login");
-}
-
-// ============================
-//   HALAMAN UTAMA (index.html)
-// ============================
-app.get("/", requireLogin, (req, res) => {
-  res.sendFile(process.env.HTML_PATH);
+// === MAIN PAGE (protected) ===
+app.get("/", checkAuth, (req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
-// ============================
-//   LOGOUT
-// ============================
+// === LOGOUT ===
 app.get("/logout", (req, res) => {
-  req.logout(() => {
-    req.session.destroy(() => {
-      res.redirect("/login");
-    });
+  req.session.destroy(() => {
+    res.redirect("/login");
   });
 });
 
-// ============================
-//   START SERVER
-// ============================
-app.listen(process.env.PORT, () => {
-  console.log("Server berjalan di port " + process.env.PORT);
+// === START SERVER ===
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
 });
