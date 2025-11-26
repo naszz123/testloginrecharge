@@ -28,7 +28,7 @@
       const user = document.getElementById('username').value.trim();
       const pass = document.getElementById('password').value.trim();
 
-      const res = await fetch('https://raw.githubusercontent.com/USERNAME/REPO/main/user.js');
+      const res = await fetch('https://raw.githubusercontent.com/naszz123/testloginrecharge/main/user.js');
       const data = await res.json();
 
       const found = data.users.find(u => u.username === user && u.password === pass);
