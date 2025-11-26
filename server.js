@@ -1,15 +1,14 @@
 require("dotenv").config();
 const express = require("express");
-const session = require("express-session");
 const path = require("path");
+const session = require("express-session");
 const passport = require("passport");
 const GitHubStrategy = require("passport-github2").Strategy;
-const serverless = require("serverless-http");
 
 const app = express();
 
-// === LOAD USERS ===
-const users = require("../user.js");
+// === Load Local Users ===
+const users = require("./user.js");
 
 // === EXPRESS CONFIG ===
 app.use(express.urlencoded({ extended: true }));
@@ -17,7 +16,7 @@ app.use(express.json());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || "secret123",
+    secret: process.env.SESSION_SECRET || "default_secret",
     resave: false,
     saveUninitialized: false,
   })
@@ -25,15 +24,15 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static("public"));
 
-// === PASSPORT GITHUB ===
+// === GITHUB LOGIN STRATEGY ===
 passport.use(
   new GitHubStrategy(
     {
-      clientID: process.env.GITHUB_CLIENT_ID || "",
-      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
-      callbackURL: process.env.GITHUB_CALLBACK_URL || "",
+      clientID: process.env.GITHUB_CLIENT_ID,
+      clientSecret: process.env.GITHUB_CLIENT_SECRET,
+      callbackURL: process.env.GITHUB_CALLBACK_URL,
     },
     (accessToken, refreshToken, profile, done) => done(null, profile)
   )
@@ -42,7 +41,7 @@ passport.use(
 passport.serializeUser((user, done) => done(null, user));
 passport.deserializeUser((obj, done) => done(null, obj));
 
-// === AUTH MIDDLEWARE ===
+// === MIDDLEWARE ===
 function checkAuth(req, res, next) {
   if (req.isAuthenticated() || req.session.loggedIn) return next();
   res.redirect("/login");
@@ -50,7 +49,7 @@ function checkAuth(req, res, next) {
 
 // === ROUTES ===
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/login.html"));
+  res.sendFile(path.join(__dirname, "public/login.html"));
 });
 
 app.post("/manual-login", (req, res) => {
@@ -84,13 +83,13 @@ app.get(
 );
 
 app.get("/", checkAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, "../index.html"));
+  res.sendFile(path.join(__dirname, "index.html"));
 });
 
 app.get("/logout", (req, res) => {
   req.session.destroy(() => res.redirect("/login"));
 });
 
-// === EXPORT KE VERCEL ===
-module.exports = serverless(app);
-      
+// === EXPORT UNTUK VERCEL ===
+module.exports = app;
+    
