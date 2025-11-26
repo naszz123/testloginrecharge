@@ -1,15 +1,15 @@
 require("dotenv").config();
 const express = require("express");
-const path = require("path");
 const session = require("express-session");
+const path = require("path");
 const passport = require("passport");
 const GitHubStrategy = require("passport-github2").Strategy;
+const serverless = require("serverless-http");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
 
-// === Load Local Users ===
-const users = require("./user.js");
+// === LOAD USERS ===
+const users = require("../user.js");
 
 // === EXPRESS CONFIG ===
 app.use(express.urlencoded({ extended: true }));
@@ -17,7 +17,7 @@ app.use(express.json());
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET,
+    secret: process.env.SESSION_SECRET || "secret123",
     resave: false,
     saveUninitialized: false,
   })
@@ -25,19 +25,17 @@ app.use(
 
 app.use(passport.initialize());
 app.use(passport.session());
-app.use(express.static("public"));
+app.use(express.static(path.join(__dirname, "../public")));
 
-// === GITHUB LOGIN STRATEGY (optional) ===
+// === PASSPORT GITHUB ===
 passport.use(
   new GitHubStrategy(
     {
-      clientID: process.env.GITHUB_CLIENT_ID,
-      clientSecret: process.env.GITHUB_CLIENT_SECRET,
-      callbackURL: process.env.GITHUB_CALLBACK_URL,
+      clientID: process.env.GITHUB_CLIENT_ID || "",
+      clientSecret: process.env.GITHUB_CLIENT_SECRET || "",
+      callbackURL: process.env.GITHUB_CALLBACK_URL || "",
     },
-    (accessToken, refreshToken, profile, done) => {
-      return done(null, profile);
-    }
+    (accessToken, refreshToken, profile, done) => done(null, profile)
   )
 );
 
@@ -50,12 +48,11 @@ function checkAuth(req, res, next) {
   res.redirect("/login");
 }
 
-// === LOGIN PAGE ===
+// === ROUTES ===
 app.get("/login", (req, res) => {
-  res.sendFile(path.join(__dirname, "public/login.html"));
+  res.sendFile(path.join(__dirname, "../public/login.html"));
 });
 
-// === LOGIN MANUAL ===
 app.post("/manual-login", (req, res) => {
   const { username, password } = req.body;
 
@@ -78,7 +75,6 @@ app.post("/manual-login", (req, res) => {
   res.redirect("/");
 });
 
-// === GITHUB ROUTES (hidden button) ===
 app.get("/auth/github", passport.authenticate("github", { scope: ["user:email"] }));
 
 app.get(
@@ -87,19 +83,14 @@ app.get(
   (req, res) => res.redirect("/")
 );
 
-// === MAIN PAGE (protected) ===
 app.get("/", checkAuth, (req, res) => {
-  res.sendFile(path.join(__dirname, "index.html"));
+  res.sendFile(path.join(__dirname, "../index.html"));
 });
 
-// === LOGOUT ===
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.redirect("/login");
-  });
+  req.session.destroy(() => res.redirect("/login"));
 });
 
-// === START SERVER ===
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+// === EXPORT KE VERCEL ===
+module.exports = serverless(app);
+      
