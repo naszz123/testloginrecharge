@@ -1,50 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
-  <title>Login Page</title>
-  <style>
-    body { font-family: Arial; background:#eef; display:flex; justify-content:center; align-items:center; height:100vh; }
-    .box { background:white; padding:25px; width:300px; border-radius:12px; box-shadow:0 0 10px rgba(0,0,0,0.1); }
-    input { width:100%; padding:10px; margin:10px 0; border-radius:8px; border:1px solid #aaa; }
-    button { width:100%; padding:10px; border:none; border-radius:8px; cursor:pointer; font-size:16px; }
-    .login-btn { background:#4CAF50; color:white; }
-    .buy-btn { background:#0a84ff; color:white; margin-top:10px; }
-  </style>
+  <title>Login Access</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-  <div class="box">
-    <h2 style="text-align:center;">Login</h2>
+  <div class="login-box">
 
-    <input id="username" type="text" placeholder="Nama">
-    <input id="password" type="password" placeholder="Password">
+    <h2>Member Login</h2>
 
-    <button class="login-btn" onclick="login()">Login</button>
-    <button class="buy-btn" onclick="buyAccess()">Buy Access</button>
+    <form action="/manual-login" method="POST">
+
+      <input type="text" name="username" placeholder="Username" required>
+
+      <input type="password" name="password" placeholder="Password" required>
+
+      <button class="login-btn">Login</button>
+    </form>
+
+    <a href="https://wa.me/6285797237843?text=bng%20mo%20beli%20akses%20akun%20rechargenya'"
+       class="buy-btn">
+       Buy Access
+    </a>
+
   </div>
-
-  <script>
-    async function login() {
-      const user = document.getElementById('username').value.trim();
-      const pass = document.getElementById('password').value.trim();
-
-      const res = await fetch('https://raw.githubusercontent.com/naszz123/testloginrecharge/main/user.js');
-      const data = await res.json();
-
-      const found = data.users.find(u => u.username === user && u.password === pass);
-
-      if(found) {
-        alert('Login berhasil!');
-        window.location.href = 'index.html';
-      } else {
-        alert('Nama atau Password salah');
-      }
-    }
-
-    function buyAccess() {
-      window.location.href = "https://wa.me/6285797237843?text=Saya%20ingin%20membeli%akses";
-    }
-  </script>
 </body>
 </html>
-
