@@ -9,7 +9,7 @@ const app = express();
 const PORT = process.env.PORT || 3000;
 
 // === Load Local Users ===
-const users = require("./users.js");
+const users = require("./user.js");
 
 // === EXPRESS CONFIG ===
 app.use(express.urlencoded({ extended: true }));
